@@ -1,0 +1,56 @@
+Function CreateFilePath() As String
+
+    ' Select photo file using FileDialog
+    
+    With Application.FileDialog(msoFileDialogFilePicker)
+        .Title = "Select Photo"
+        .Filters.Clear
+        .Filters.Add "Select Evidence", "*.jpg; *.jpeg; *.bmp; *.gif; *.png; *.pdf"
+        .InitialFileName = "C:\"
+        If .Show = True Then
+            CreateFilePath = .SelectedItems(1)
+        Else
+            CreateFilePath = ""
+        End If
+        .Title = ""
+        .Filters.Clear
+    End With
+    
+End Function
+
+=========================
+Private Sub cmdPickFile_Click()
+    'Select photo using msoFileDialogFilePicker
+    Dim FilePath As String, sql As String
+    FilePath = modGlobal.CreateFilePath()
+    sql = "Select * from [tblStaffPhoto]"
+    
+    Dim fld As ADODB.Field
+    Dim att As ADODB.Stream
+    
+    
+    If FilePath <> "" Then
+        modConnection.OpenConn
+        Dim rs As New ADODB.Recordset
+        rs.Open sql, cnn, adOpenDynamic, adLockOptimistic
+        
+        Dim Stream_Pic As New ADODB.Stream
+        Stream_Pic.Open
+        Stream_Pic.Type = adTypeBinary
+        Stream_Pic.LoadFromFile FilePath
+        
+        rs.AddNew
+        rs.Fields("S_Name").Value = "akm"
+        rs.Fields("Picture") = Stream_Pic.Read
+        rs.Update
+        Me.lblAttachedInfo.Caption = "File Loaded"
+        
+        Stream_Pic.Close
+        Set Stream_Pic = Nothing
+        rs.Close
+        Set rs = Nothing
+        modConnection.CloseConn
+        
+        
+    End If
+End Sub
